@@ -1,0 +1,40 @@
+---
+- name: Install Minikube binary
+  get_url:
+    url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+    mode: '0755'
+    dest: /usr/bin/minikube
+
+- name: Install Docker
+  yum:
+   name: 
+     - yum-utils 
+     - device-mapper-persistent-data 
+     - lvm2
+   state: present
+
+- name: Add docker ce repository
+  template:
+    src: docker-ce.repo.j2
+    dest: /etc/yum.repos.d/docker-ce.repo
+
+- name: Install docker
+  yum:
+   name:
+     - docker-ce
+     - containerd
+     - docker-ce-cli
+   state: present
+
+- name: Start Docker Service
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Install kubectl client on localhost
+  get_url:
+    url: https://storage.googleapis.com/kubernetes-release/release/v1.15.1/bin/linux/amd64/kubectl
+    mode: '0755'
+    dest: /usr/bin/kubectl
+  delegate_to: localhost

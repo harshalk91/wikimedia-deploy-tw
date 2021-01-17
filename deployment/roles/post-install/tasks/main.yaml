@@ -1,0 +1,29 @@
+---
+- name: Deploy Mysql DB
+  shell: kubectl apply -f ../files/mysql-deployment.yaml
+
+- name: wait for Mysql pod to become ready
+  shell: kubectl wait --namespace=default --for=condition=Ready pods --selector tier=mysql --timeout=120s
+  register: mysql_pods_ready
+
+- debug: var=mysql_pods_ready.stdout_lines
+
+- set_fact:
+     mysqlusername: '{{ "cm9vdAo=" | b64decode }}'
+     mysqlpassword: '{{ "V3h0YmU3NXBvTkUK" | b64decode}}'
+     mysqldatabase: '{{ "bWVkaWF3aWtpCg==" | b64decode}}'
+
+- name: Creating Secrets
+  shell: kubectl create secret generic mysql-secret-test --from-literal=username="{{ mysqlusername}}" --from-literal=password="{{ mysqlpassword }}" --from-literal=database="{{ mysqldatabase }}"
+
+- name: Create configmap
+  shell: kubectl create configmap appusers --from-file=../files/create_user.sql
+
+- name: Deploy wikimedia
+  shell: kubectl apply -f ../files/mysql-deployment.yaml
+
+- name: wait for wikimedia pod to become ready
+  shell: kubectl wait --namespace=default --for=condition=Ready pods --selector tier=frontend --timeout=120s
+  register: wikimedia_pods_ready
+
+- debug: var=wikimedia_pods_ready.stdout_lines

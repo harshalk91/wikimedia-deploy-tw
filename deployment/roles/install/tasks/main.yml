@@ -1,0 +1,16 @@
+---
+- name: Setup Minikube
+  shell: minikube start --vm-driver=none --kubernetes-version=1.15.1
+
+- shell: (cd /root/.kube; find . -maxdepth 1 -type f) | cut -d'/' -f2
+  register: files_to_copy
+
+- fetch: src=/root/.kube/{{ item }} dest=/root/.kube/
+  with_items: "{{ files_to_copy.stdout_lines }}"
+
+
+- name: Wait for Kubernetes Node to become ready
+  shell: "sleep 60 && kubectl wait --namespace=kube-system --for=condition=Ready pods --selector tier=control-plane --timeout=600s"
+  register: control_plane_pods_ready
+
+- debug: var=control_plane_pods_ready.stdout_lines

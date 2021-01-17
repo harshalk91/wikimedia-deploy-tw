@@ -1,0 +1,11 @@
+---
+- name: Pre-install
+  hosts: all
+  roles:
+    #- pre-install
+    #- install
+
+- name: post-install
+  hosts: localhost
+  roles:
+    - post-install

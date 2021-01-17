@@ -1,1 +1,2 @@
-# wikimedia-deploy-tw
+# wikimedia-deploy
+Demo deployment for wikimedia
