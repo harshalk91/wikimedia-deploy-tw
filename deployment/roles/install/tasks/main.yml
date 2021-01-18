@@ -1,16 +1,45 @@
 ---
+- name: Add preflight requiremtn for iptables
+  shell: echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
+
 - name: Setup Minikube
   shell: minikube start --vm-driver=none --kubernetes-version=1.15.1
+
+- name: Create .minikube directory
+  file:
+   path: ~/.minikube
+   state: directory
+   mode: 0755
+  delegate_to: localhost
 
 - shell: (cd /root/.kube; find . -maxdepth 1 -type f) | cut -d'/' -f2
   register: files_to_copy
 
-- fetch: src=/root/.kube/{{ item }} dest=/root/.kube/
+- fetch: 
+    src: /root/.kube/{{ item }} 
+    dest: /root/.kube/
+    flat: yes
   with_items: "{{ files_to_copy.stdout_lines }}"
 
+- name: Create .minikube directory
+  file:
+   path: ~/.minikube
+   state: directory
+   mode: 0755
+  delegate_to: localhost
 
-- name: Wait for Kubernetes Node to become ready
-  shell: "sleep 60 && kubectl wait --namespace=kube-system --for=condition=Ready pods --selector tier=control-plane --timeout=600s"
-  register: control_plane_pods_ready
+- name: Fetch stuff from the remote and save to local
+  synchronize: src={{ item }} dest=/root/ mode=pull
+  with_items:
+    - "/root/.minikube"
 
-- debug: var=control_plane_pods_ready.stdout_lines
+- name: Wait for kubernetes master to become ready
+  shell: |
+       node_status=$(kubectl get nodes | grep master | awk '{print $2}')
+       while [ "$node_status" != "Ready" ]
+       do
+         sleep 2
+         node_status=$(kubectl get nodes | grep master | awk '{print $2}')
+         echo "Kubernetes Node status: $node_status" 
+       done
+  delegate_to: localhost

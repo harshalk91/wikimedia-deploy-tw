@@ -1,0 +1,6 @@
+---
+- name: service URL
+  shell: minikube service wkmedia --url
+  register: service-url
+
+- debug: var=service-url.stdout.lines

@@ -1,11 +1,11 @@
 ---
 - name: Pre-install
-  hosts: all
+  hosts: wikimedia
   roles:
-    #- pre-install
-    #- install
+    - pre-install
+    - install
 
 - name: post-install
-  hosts: localhost
+  hosts: local
   roles:
     - post-install
